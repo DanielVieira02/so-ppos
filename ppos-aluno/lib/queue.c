@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "queue.h"
+#include "../kernel/memory.h"
 
 struct queue_t {
     int size;
@@ -19,7 +20,7 @@ struct node_t {
 };
 
 struct queue_t *queue_create() {
-    struct queue_t *queue = malloc(sizeof(struct queue_t));
+    struct queue_t *queue = mem_alloc(sizeof(struct queue_t));
     
     if (queue == NULL) {
         return NULL;
@@ -40,11 +41,11 @@ int queue_destroy(struct queue_t *queue) {
 
     while(current_node != NULL) {
         aux = current_node->next;
-        free(current_node);
+        mem_free(current_node);
         current_node = aux;
     }
 
-    free(queue);
+    mem_free(queue);
 
     return NOERROR;
 }
@@ -61,7 +62,7 @@ int queue_add(struct queue_t *queue, void *item) {
         current_node = last_node->next;
     }
 
-    current_node = malloc(sizeof(struct node_t));
+    current_node = mem_alloc(sizeof(struct node_t));
     if (current_node == NULL) {
         return ERROR;
     }
@@ -107,7 +108,7 @@ int queue_del(struct queue_t *queue, void *item) {
     }
 
     last_node->next = current_node->next;
-    free(current_node);
+    mem_free(current_node);
     queue->size--;
 
     return NOERROR;

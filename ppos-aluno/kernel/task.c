@@ -8,48 +8,50 @@
 
 #include "task.h"
 #include "../lib/queue.h"
+#include "memory.h"
 
 #define STACKSIZE 32 * 1024
 
-struct queue_t * task_queue;
-
-int current_id;
-struct task_t *current_task;
+int current_id = 0;
+struct task_t *current_task = NULL;
 
 void task_init() {
     current_id = 0;
 
-    task_queue = queue_create();
-    struct task_t *kernel_task = task_create("task_kernel", NULL, NULL);
-    queue_add(task_queue, kernel_task);
-    current_task = (struct task_t *)queue_head(task_queue);
+    struct task_t *task_kernel = mem_alloc(sizeof(struct task_t));
+    task_kernel->name = 'kernel';
+    task_kernel->id = 0;
+    task_kernel->status = EXECUTING;
+    task_kernel->task_pai = NULL;
+
+    current_task = task_kernel;
 }
 
 struct task_t *task_create(char *name, void (*entry)(void *), void *arg) {
     struct task_t *task;
 
-    task = malloc(sizeof(struct task_t));
+    task = mem_alloc(sizeof(struct task_t));
 
     if(task == NULL) {
         return NULL;
     }
 
-    char * stack;
-    stack = malloc(STACKSIZE);
+    void * stack;
+    stack = (void *) mem_alloc(STACKSIZE);
 
     if(stack == NULL) {
         return NULL;
     }
 
-    task->id = current_id;
+    task->id = ++current_id;
     task->name = name;
     task->status = READY;
     if(ctx_create(&task->context, entry, arg, stack, STACKSIZE) == ERROR){
+        mem_free(stack);
+        mem_free(task);
         return NULL;
     }
-
-    current_id++;
-    queue_add(task_queue, task);
+    task->task_pai = current_task;
 
     return task;
 }
@@ -59,21 +61,29 @@ int task_destroy(struct task_t *task) {
         return ERROR;
     }
 
-    queue_del(task_queue, task);
-
-    free(task->context.stack);
     free(task);
+    task->task_pai = NULL;
+    task->status = DONE;
 
     return NOERROR;
 }
 
 int task_switch(struct task_t *task) {
+    struct task_t * task_switch;
+
     if (task == NULL) {
-        return ERROR;
+        if (!current_task || !current_task->task_pai)
+            return ERROR;
+
+        task_switch = current_task->task_pai;
+    } else {
+        task_switch = task;
     }
 
     current_task->status = READY;
-    ctx_swap(&current_task->context, &task->context);
+    if (ctx_swap(&current_task->context, &task_switch->context) == ERROR)
+        return ERROR;
+
     current_task = task;
     current_task->status = EXECUTING;
 }

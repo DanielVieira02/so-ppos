@@ -22,6 +22,7 @@ struct task_t
     char *name;                 // nome da tarefa
     struct ctx_t context;       // contexto armazenado da tarefa
     int status;                 // pronta, executando, terminada, ...
+    struct task_t * task_pai;
                                 //  ...
 };
 
