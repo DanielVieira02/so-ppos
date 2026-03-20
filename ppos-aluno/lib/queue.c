@@ -171,19 +171,18 @@ void queue_print(char *name, struct queue_t *queue, void(func)(void *)) {
         return;
     }
 
-    printf(" [");
+    printf("[ ");
     struct node_t *current_node = queue->first;
 
     while(current_node != NULL) {
-        printf(" ");
         if (func == NULL) {
             printf("undef ");
         } else {
             func(current_node->item);
+            printf(" ");
         }
-        printf(" ");
         current_node = current_node->next;
     }
 
-    printf("] (%d itens)\n", queue->size);
+    printf("] (%d items)\n", queue->size);
 }
