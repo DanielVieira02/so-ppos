@@ -28,6 +28,8 @@ struct task_t
     int status;                 // pronta, executando, terminada, ...
     struct task_t * task_pai;
     struct queue_t *suspend_queue;
+    int static_priority;
+    int dynamic_priority;
                                 //  ...
 };
 
