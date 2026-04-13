@@ -9,15 +9,20 @@
 
 #include <stdlib.h>
 
-#include "task.h"
 #include "../lib/queue.h"
+#include "task.h"
 #include "memory.h"
 #include "ctx.h"
+#include "scheduler.h"
 
 #define STACKSIZE 32 * 1024
 
 int current_id = 0;
 struct task_t *current_task = NULL;
+struct task_t *task_kernel = NULL;
+
+extern struct queue_t *ready_queue;
+int userTasks = 0;
 
 void task_init() {
     current_id = 0;
@@ -25,8 +30,10 @@ void task_init() {
     struct task_t *kernel = mem_alloc(sizeof(struct task_t));
     kernel->name = "kernel";
     kernel->id = 0;
-    kernel->status = RODANDO;
+    kernel->status = EXECUTING;
     kernel->task_pai = NULL;
+    sched_setprio(kernel, 0);
+    task_kernel = kernel;
 
     current_task = kernel;
 }
@@ -47,10 +54,10 @@ struct task_t *task_create(char *name, void (*entry)(void *), void *arg) {
         return NULL;
     }
 
-    
     task->id = ++current_id;
     task->name = name;
-    task->status = PRONTA;
+    task->status = READY;
+    sched_setprio(task, 0);
     if(ctx_create(&task->context, entry, arg, stack, STACKSIZE) == ERROR){
         mem_free(stack);
         mem_free(task);
@@ -58,6 +65,10 @@ struct task_t *task_create(char *name, void (*entry)(void *), void *arg) {
     }
     task->task_pai = current_task;
     task->vg_id = VALGRIND_STACK_REGISTER(task->context.stack, task->context.stack + STACKSIZE);
+    if(task != current_task){
+        queue_add(ready_queue, (void *)task);
+        userTasks ++;
+    }
 
     return task;
 }
@@ -68,7 +79,7 @@ int task_destroy(struct task_t *task) {
     }
 
     task->task_pai = NULL;
-    task->status = TERMINADA;
+    task->status = DONE;
     if (task->id)
         free(task->context.stack);
     VALGRIND_STACK_DEREGISTER (task->vg_id);
@@ -91,13 +102,10 @@ int task_switch(struct task_t *task) {
         task_switch = task;
     }
     previous_task = current_task;
-
-    if (previous_task)
-        previous_task->status = SUSPENSA;
-
+    
     current_task = task_switch;
     if (current_task)
-        current_task->status = RODANDO;
+        current_task->status = EXECUTING;
 
     if (ctx_swap(previous_task ? &previous_task->context : NULL, task_switch ? &task_switch->context : NULL) == ERROR)
         return ERROR;
