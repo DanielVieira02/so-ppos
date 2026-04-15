@@ -11,6 +11,7 @@
 
 #include "../lib/queue.h"
 #include "task.h"
+#include "task.h"
 #include "memory.h"
 #include "ctx.h"
 #include "scheduler.h"
@@ -31,6 +32,7 @@ void task_init() {
     kernel->name = "kernel";
     kernel->id = 0;
     kernel->status = EXECUTING;
+    kernel->status = EXECUTING;
     kernel->task_pai = NULL;
     sched_setprio(kernel, 0);
     task_kernel = kernel;
@@ -47,12 +49,14 @@ struct task_t *task_create(char *name, void (*entry)(void *), void *arg) {
         return NULL;
     }
 
+
     void * stack;
     stack = (void *) mem_alloc(STACKSIZE);
 
     if(stack == NULL) {
         return NULL;
     }
+
 
     task->id = ++current_id;
     task->name = name;
@@ -107,9 +111,8 @@ int task_switch(struct task_t *task) {
     if (current_task)
         current_task->status = EXECUTING;
 
-    if (ctx_swap(previous_task ? &previous_task->context : NULL, task_switch ? &task_switch->context : NULL) == ERROR)
+    if( ctx_swap(&previous_task->context, &current_task->context) == ERROR)
         return ERROR;
-
     return NOERROR;
 }
 

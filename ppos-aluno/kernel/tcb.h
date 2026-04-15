@@ -12,10 +12,12 @@
 #ifndef __PPOS_TCB__
 #define __PPOS_TCB__
 
-#include <valgrind/valgrind.h>
-
 #include "ctx.h"
 
+#define READY       0
+#define EXECUTING   1
+#define DONE        2
+#define SUSPENDED   3
 #define READY       0
 #define EXECUTING   1
 #define DONE        2
@@ -30,6 +32,9 @@ struct task_t
     struct ctx_t context;       // contexto armazenado da tarefa
     int status;                 // pronta, executando, terminada, ...
     struct task_t * task_pai;
+    struct queue_t *suspend_queue;
+    int static_priority;
+    int dynamic_priority;
     struct queue_t *suspend_queue;
     int static_priority;
     int dynamic_priority;
