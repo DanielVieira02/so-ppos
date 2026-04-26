@@ -12,6 +12,8 @@
 #include "../lib/queue.h"
 
 #include "task.h"
+#include "time.h"
+
 
 #include "scheduler.h"
 
@@ -23,6 +25,7 @@ struct queue_t *ready_queue;
 //ponteiro para a tarefa atual
 extern struct task_t *current_task;
 extern struct task_t *task_kernel;
+extern int local_time;
 
 void dispatcher_init() {
     ready_queue = queue_create();
@@ -33,6 +36,9 @@ void task_run(struct task_t *task) {
     //retira a tarefa task da fila de prontas
     if (queue_del(ready_queue, (void *) task) == 0) {
         task->status = EXECUTING;
+        task->current_start_time = systime();
+        task->quantum = QUANTUM;
+        task->number_activation++;
 
         if(task_switch(task) < 0) {
             printf("ERRO na transferencia de CPU");
@@ -44,7 +50,7 @@ void task_run(struct task_t *task) {
 }
 
 void task_yield() {
-    current_task->status = READY;
+    current_task->cpu_time += (systime() - current_task->current_start_time);
 
     //tarefa atual esta pronta
     queue_add(ready_queue, (void*) current_task);
@@ -57,6 +63,7 @@ void task_suspend(struct queue_t *queue){
 
     //tarefa atual esta suspensa
     if (current_task){
+        current_task->cpu_time += (systime() - current_task->current_start_time);
         queue_add(queue, (void *) current_task);
         current_task->suspend_queue = queue;
     }
@@ -82,16 +89,23 @@ void task_exit(int exit_code){
     if (current_task) {
         current_task->status = DONE;
     }
+    current_task->cpu_time += (systime() - current_task->current_start_time);
+    current_task->alive_time = systime() - current_task->birth_time;
+
+    printf("PPOS: task %d (%s) exit code %d, %5d ms elapsed time, %5d ms cpu time, %5d activations\n",
+       current_task->id, current_task->name, exit_code, 
+       current_task->alive_time, current_task->cpu_time, 
+       current_task->number_activation);
 
     task_switch(task_kernel);
 }
 
 void dispatcher() {
+
     struct task_t * task_user = task_create("user", user_main, NULL);
     queue_add(ready_queue, task_user);
 
     while(queue_size(ready_queue) > 0) {
-        //Scheduler provisorio
         struct task_t *next = NULL;
 
         //scheduler pega o item do primeiro no
@@ -120,6 +134,13 @@ void dispatcher() {
             }
         }
     }
+    task_kernel->cpu_time = 0;
+    task_kernel->alive_time = systime() - task_kernel->birth_time;
+
+    printf("PPOS: task %d (%s) exit code %d, %d ms elapsed time, %5d ms cpu time, %5d activations\n",
+       task_kernel->id, task_kernel->name, 0, 
+       task_kernel->alive_time, task_kernel->cpu_time, 
+       task_kernel->number_activation);
 
     task_destroy(task_kernel);
     queue_destroy(ready_queue);
