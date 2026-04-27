@@ -28,13 +28,13 @@ int systime() {
 
 void timer_handler(int sig) {
     local_time++;
-    
-    if (current_task && current_task->id > 1) {
+
+    if (current_task && current_task->id) {
         current_task->quantum--;
         if (current_task->quantum <= 0) {
             current_task->quantum = QUANTUM;
             task_kernel->number_activation++;
-            task_yield(); 
+            task_yield(task_kernel);
         }
     }
 }
@@ -43,6 +43,6 @@ void timer_handler(int sig) {
 void time_init() {
     local_time = 0;
 
-    hw_irq_handle(1, timer_handler); 
+    hw_irq_handle(1, timer_handler);
     hw_timer(1, 1);
 }

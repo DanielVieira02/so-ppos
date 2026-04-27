@@ -41,7 +41,7 @@ void task_run(struct task_t *task) {
         task->number_activation++;
 
         if(task_switch(task) < 0) {
-            printf("ERRO na transferencia de CPU");
+            printf("ERRO na transferencia de CPU\n");
         }
     } else {
             printf("ERRO: Tarefa nao encontrada na fila de prontas \n");
@@ -50,12 +50,14 @@ void task_run(struct task_t *task) {
 }
 
 void task_yield() {
-    current_task->cpu_time += (systime() - current_task->current_start_time);
+    if (current_task->id) {
+        current_task->cpu_time += (systime() - current_task->current_start_time);
 
-    //tarefa atual esta pronta
-    queue_add(ready_queue, (void*) current_task);
-
-    task_switch(task_kernel);
+        //tarefa atual esta pronta
+        queue_add(ready_queue, (void*) current_task);
+        
+        task_switch(task_kernel);
+    }
 }
 
 void task_suspend(struct queue_t *queue){
@@ -86,24 +88,23 @@ void task_awake(struct task_t *task){
 }
 
 void task_exit(int exit_code){
-    if (current_task) {
-        current_task->status = DONE;
-    }
+    current_task->status = DONE;
     current_task->cpu_time += (systime() - current_task->current_start_time);
     current_task->alive_time = systime() - current_task->birth_time;
 
     printf("PPOS: task %d (%s) exit code %d, %5d ms elapsed time, %5d ms cpu time, %5d activations\n",
-       current_task->id, current_task->name, exit_code, 
-       current_task->alive_time, current_task->cpu_time, 
-       current_task->number_activation);
+        current_task->id, current_task->name, exit_code, 
+        current_task->alive_time, current_task->cpu_time, 
+        current_task->number_activation);
 
     task_switch(task_kernel);
 }
 
 void dispatcher() {
 
-    struct task_t * task_user = task_create("user", user_main, NULL);
-    queue_add(ready_queue, task_user);
+    if (!task_create("user", user_main, NULL)) {
+        return;
+    };
 
     while(queue_size(ready_queue) > 0) {
         struct task_t *next = NULL;
@@ -142,6 +143,5 @@ void dispatcher() {
        task_kernel->alive_time, task_kernel->cpu_time, 
        task_kernel->number_activation);
 
-    task_destroy(task_kernel);
     queue_destroy(ready_queue);
 }

@@ -35,12 +35,12 @@ void task_init() {
     kernel->status = EXECUTING;
     kernel->task_pai = NULL;
     sched_setprio(kernel, 0);
-    task_kernel = kernel;
-    kernel->birth_time = systime();
+    kernel->birth_time = 0;
     kernel->cpu_time = 0;
     kernel->number_activation = 1;
-    kernel->current_start_time = systime();
-
+    kernel->current_start_time = 0;
+    
+    task_kernel = kernel;
     current_task = kernel;
 }
 
@@ -60,8 +60,6 @@ struct task_t *task_create(char *name, void (*entry)(void *), void *arg) {
         return NULL;
     }
 
-    task->number_activation = 0;
-    task->birth_time = systime();
     task->id = ++current_id;
     task->name = name;
     task->status = READY;
@@ -77,6 +75,10 @@ struct task_t *task_create(char *name, void (*entry)(void *), void *arg) {
         queue_add(ready_queue, (void *)task);
         userTasks ++;
     }
+    task->birth_time = systime();
+    task->cpu_time = 0;
+    task->number_activation = 0;
+    task->current_start_time = systime();
 
     return task;
 }
