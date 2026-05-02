@@ -29,12 +29,14 @@ int systime() {
 void timer_handler(int sig) {
     local_time++;
 
-    if (current_task && current_task->id) {
-        current_task->quantum--;
-        if (current_task->quantum <= 0) {
-            current_task->quantum = QUANTUM;
-            task_kernel->number_activation++;
-            task_yield(task_kernel);
+    if (current_task) {
+	    current_task->cpu_time++;
+    	if (current_task->id) {
+		    current_task->quantum--;
+		    if (current_task->quantum <= 0) {
+		        current_task->quantum = QUANTUM;
+		        task_yield(task_kernel);
+		   	}
         }
     }
 }

@@ -35,7 +35,6 @@ struct task_t
     unsigned int alive_time; // tempo total vivo
     unsigned int cpu_time; //tempo total de cpu usada
     unsigned int number_activation; //qnt de ativacoes
-    unsigned int current_start_time; //guarda o momento que comeca a usar a cpu
     unsigned int birth_time; //guarda o momento em que nasceu
     int quantum;
                                 //  ...

@@ -36,7 +36,6 @@ void task_run(struct task_t *task) {
     //retira a tarefa task da fila de prontas
     if (queue_del(ready_queue, (void *) task) == 0) {
         task->status = EXECUTING;
-        task->current_start_time = systime();
         task->quantum = QUANTUM;
         task->number_activation++;
 
@@ -51,8 +50,6 @@ void task_run(struct task_t *task) {
 
 void task_yield() {
     if (current_task->id) {
-        current_task->cpu_time += (systime() - current_task->current_start_time);
-
         //tarefa atual esta pronta
         queue_add(ready_queue, (void*) current_task);
         
@@ -65,7 +62,6 @@ void task_suspend(struct queue_t *queue){
 
     //tarefa atual esta suspensa
     if (current_task){
-        current_task->cpu_time += (systime() - current_task->current_start_time);
         queue_add(queue, (void *) current_task);
         current_task->suspend_queue = queue;
     }
@@ -89,7 +85,6 @@ void task_awake(struct task_t *task){
 
 void task_exit(int exit_code){
     current_task->status = DONE;
-    current_task->cpu_time += (systime() - current_task->current_start_time);
     current_task->alive_time = systime() - current_task->birth_time;
 
     printf("PPOS: task %d (%s) exit code %d, %5d ms elapsed time, %5d ms cpu time, %5d activations\n",
@@ -108,6 +103,7 @@ void dispatcher() {
 
     while(queue_size(ready_queue) > 0) {
         struct task_t *next = NULL;
+        task_kernel->number_activation++;
 
         //scheduler pega o item do primeiro no
         if (ready_queue != NULL && (queue_size(ready_queue) > 0))
@@ -135,7 +131,6 @@ void dispatcher() {
             }
         }
     }
-    task_kernel->cpu_time = 0;
     task_kernel->alive_time = systime() - task_kernel->birth_time;
 
     printf("PPOS: task %d (%s) exit code %d, %d ms elapsed time, %5d ms cpu time, %5d activations\n",
@@ -143,5 +138,8 @@ void dispatcher() {
        task_kernel->alive_time, task_kernel->cpu_time, 
        task_kernel->number_activation);
 
+	task_destroy(task_kernel);
+	current_task = NULL;
+	task_kernel = NULL;
     queue_destroy(ready_queue);
 }
