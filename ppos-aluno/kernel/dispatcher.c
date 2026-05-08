@@ -57,14 +57,13 @@ void task_yield() {
     }
 }
 
-void task_suspend(struct queue_t *queue){
-    current_task->status = SUSPENDED;
-
-    //tarefa atual esta suspensa
-    if (current_task){
-        queue_add(queue, (void *) current_task);
-        current_task->suspend_queue = queue;
+void task_suspend(struct task_t *awaited_task){
+    if (!current_task || !awaited_task) {
+        return;
     }
+    
+    current_task->status = SUSPENDED;
+    queue_add(awaited_task->suspend_queue, (void *) current_task);
 
     task_switch(task_kernel);
 }
@@ -83,9 +82,17 @@ void task_awake(struct task_t *task){
     }
 }
 
-void task_exit(int exit_code){
+void task_exit(int exit_code) {
     current_task->status = DONE;
     current_task->alive_time = systime() - current_task->birth_time;
+    current_task->exit_code = exit_code;
+
+    void *queue_task = queue_head(current_task->suspend_queue);
+
+    while(queue_task != NULL) {
+        task_awake((struct task_t *)queue_task);
+        queue_task = queue_next(current_task->suspend_queue);
+    }
 
     printf("PPOS: task %d (%s) exit code %d, %5d ms elapsed time, %5d ms cpu time, %5d activations\n",
         current_task->id, current_task->name, exit_code, 
@@ -93,6 +100,18 @@ void task_exit(int exit_code){
         current_task->number_activation);
 
     task_switch(task_kernel);
+}
+
+int task_wait(struct task_t *task) {
+    if (task == NULL) {
+        return -1;
+    }
+    if (task->status == DONE) {
+        return task->exit_code;
+    }
+
+    task_suspend(task);
+    return task->exit_code;
 }
 
 void dispatcher() {
@@ -122,7 +141,7 @@ void dispatcher() {
                 case DONE:
                     //  limpar contexto, liberar memoria
                     queue_del(ready_queue, next);
-                    task_destroy(next);
+                    //  task_destroy(next); a destruição as tarefas fica a cargo da tarefa que as criou
                 break;
 
                 case SUSPENDED:

@@ -28,6 +28,7 @@ struct task_t
     char *name;                 // nome da tarefa
     struct ctx_t context;       // contexto armazenado da tarefa
     int status;                 // pronta, executando, terminada, ...
+    int exit_code;
     struct task_t * task_pai;
     struct queue_t *suspend_queue;
     int static_priority;

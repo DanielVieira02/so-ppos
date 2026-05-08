@@ -74,6 +74,7 @@ struct task_t *task_create(char *name, void (*entry)(void *), void *arg) {
         queue_add(ready_queue, (void *)task);
         userTasks ++;
     }
+    task->suspend_queue = queue_create();
     task->birth_time = systime();
     task->cpu_time = 0;
     task->number_activation = 0;
