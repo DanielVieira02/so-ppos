@@ -23,21 +23,23 @@
 // Task Control Block (TCB), infos sobre uma tarefa
 struct task_t
 {
-    int id;                     // identificador da tarefa
+    int id;                             // identificador da tarefa
     int vg_id;
-    char *name;                 // nome da tarefa
-    struct ctx_t context;       // contexto armazenado da tarefa
-    int status;                 // pronta, executando, terminada, ...
+    char *name;                         // nome da tarefa
+    struct ctx_t context;               // contexto armazenado da tarefa
+    int status;                         // pronta, executando, terminada, ...
     int exit_code;
     struct task_t * task_pai;
-    struct queue_t *suspend_queue;
+    struct task_t * task_wait;          // tarefa que esta tarefa estah esperando
+    struct queue_t *suspend_queue;      // lista de tarefas esperando a atual
     int static_priority;
     int dynamic_priority;
-    unsigned int alive_time; // tempo total vivo
-    unsigned int cpu_time; //tempo total de cpu usada
-    unsigned int number_activation; //qnt de ativacoes
-    unsigned int birth_time; //guarda o momento em que nasceu
+    unsigned int alive_time;            // tempo total vivo
+    unsigned int cpu_time;              // tempo total de cpu usada
+    unsigned int number_activation;     // qnt de ativacoes
+    unsigned int birth_time;            // guarda o momento em que nasceu
     int quantum;
+    int wake_time;
                                 //  ...
 };
 

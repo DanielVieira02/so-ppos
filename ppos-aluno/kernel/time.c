@@ -7,8 +7,6 @@
 #define _POSIX_C_SOURCE 200809L
 
 #include <stdio.h>
-#include <signal.h>
-#include <sys/time.h>
 #include <stdlib.h>
 #include "tcb.h"
 #include "time.h"
@@ -17,8 +15,6 @@
 
 
 volatile int local_time;
-struct sigaction sa;
-struct itimerval timer;
 extern struct task_t *current_task;
 extern struct task_t *task_kernel;
 

@@ -24,7 +24,7 @@ struct task_t *current_task = NULL;
 struct task_t *task_kernel = NULL;
 
 extern struct queue_t *ready_queue;
-int userTasks = 0;
+unsigned int aliveUserTasks = 0;
 
 void task_init() {
     current_id = 0;
@@ -34,6 +34,8 @@ void task_init() {
     kernel->id = 0;
     kernel->status = EXECUTING;
     kernel->task_pai = NULL;
+    kernel->task_wait = NULL;
+    kernel->suspend_queue = NULL;
     sched_setprio(kernel, 0);
     kernel->birth_time = 0;
     kernel->cpu_time = 0;
@@ -69,10 +71,12 @@ struct task_t *task_create(char *name, void (*entry)(void *), void *arg) {
         return NULL;
     }
     task->task_pai = current_task;
+    task->task_wait = NULL;
+    task->suspend_queue = NULL;
     task->vg_id = VALGRIND_STACK_REGISTER(task->context.stack, task->context.stack + STACKSIZE);
     if(task != current_task){
         queue_add(ready_queue, (void *)task);
-        userTasks ++;
+        aliveUserTasks++;
     }
     task->suspend_queue = queue_create();
     task->birth_time = systime();
@@ -92,6 +96,8 @@ int task_destroy(struct task_t *task) {
     if (task->id)
         free(task->context.stack);
     VALGRIND_STACK_DEREGISTER (task->vg_id);
+    queue_destroy(task->suspend_queue);
+    task->suspend_queue = NULL;
     free(task);
 
     return NOERROR;
