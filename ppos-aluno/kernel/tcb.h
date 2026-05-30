@@ -18,6 +18,7 @@
 #define EXECUTING   1
 #define DONE        2
 #define SUSPENDED   3
+#define SLEEPING    4
 
 
 // Task Control Block (TCB), infos sobre uma tarefa
