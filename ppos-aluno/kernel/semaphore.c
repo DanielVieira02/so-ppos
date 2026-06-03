@@ -7,7 +7,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "semaphore.h"
-#include <stdatomic.h>
 #include "../lib/queue.h"
 #include "../hardware/cpu.h"
 #include "dispatcher.h"
@@ -25,9 +24,7 @@ struct semaphore_t{
     struct queue_t *fila;
     int contador;
     int lock;
-
 };
-
 
 // vetor de semaforos
 static struct semaphore_t *tabela_semaforos[MAX_SEMAPHORES] = {NULL};
@@ -110,13 +107,13 @@ int sem_destroy(struct semaphore_t *s){
 
     struct task_t *t = queue_head(s->fila);
     while(t != NULL){
-        struct task_t *aux =t;
-        t = queue_next(s->fila);
+		    struct task_t *aux =t;
+		    t = queue_next(s->fila);
 
-        queue_del(s->fila,aux);
-        aux->status = READY;
-        aux->exit_code = ERROR;
-        queue_add(ready_queue,aux);
+		    queue_del(s->fila,aux);
+		    aux->status = READY;
+		    aux->exit_code = ERROR;
+		    queue_add(ready_queue, aux);
         }
 
     queue_destroy(s->fila);

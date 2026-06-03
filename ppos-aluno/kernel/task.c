@@ -40,6 +40,7 @@ void task_init() {
     kernel->birth_time = 0;
     kernel->cpu_time = 0;
     kernel->number_activation = 1;
+    kernel->exit_code = 0;
     
     task_kernel = kernel;
     current_task = kernel;
@@ -82,6 +83,7 @@ struct task_t *task_create(char *name, void (*entry)(void *), void *arg) {
     task->birth_time = systime();
     task->cpu_time = 0;
     task->number_activation = 0;
+    task->exit_code = 0;
 
     return task;
 }
