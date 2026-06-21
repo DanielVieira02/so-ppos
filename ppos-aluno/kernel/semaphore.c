@@ -5,7 +5,6 @@
 // Semáforos e spinlocks
 
 #include <stdio.h>
-#include <stdlib.h>
 #include "semaphore.h"
 #include "../lib/queue.h"
 #include "../hardware/cpu.h"
@@ -13,6 +12,7 @@
 #include "tcb.h"
 #include "task.h"
 #include "time.h"
+#include "memory.h"
 
 #define MAX_SEMAPHORES 64
 
@@ -51,7 +51,7 @@ void spin_unlock(int *lock){
 }
 
 struct semaphore_t *sem_create(int value){
-    struct semaphore_t *s = malloc(sizeof(struct semaphore_t));
+    struct semaphore_t *s = mem_alloc(sizeof(struct semaphore_t));
     if(!s){
         printf("Semaforo nao criado\n");
         return NULL;
@@ -63,7 +63,7 @@ struct semaphore_t *sem_create(int value){
 
     if(!s->fila){
         printf("Fila do semaforo nao criada\n");
-        free(s);
+        mem_free(s);
         return NULL;
     }
 
@@ -80,7 +80,7 @@ struct semaphore_t *sem_create(int value){
     if (!registrado) {
         printf("Erro: Limite maximo de semaforos do SO atingido\n");
         queue_destroy(s->fila);
-        free(s);
+        mem_free(s);
         return NULL;
     }
 
@@ -121,7 +121,7 @@ int sem_destroy(struct semaphore_t *s){
 
     spin_unlock(&s->lock);
 
-    free(s);
+    mem_free(s);
     return NOERROR;
 }
 

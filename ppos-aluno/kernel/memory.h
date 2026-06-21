@@ -30,4 +30,14 @@ int mem_free(void *ptr);
 // gera um relatório sobre o uso da memória
 void mem_report();
 
+struct mem_block 
+{
+    void *initial_address;
+    long int block_size;
+    int is_allocked; // 0 = livre | 1 = alocado
+    struct mem_block *left_block;
+    struct mem_block *right_block;
+    int id;
+};
+
 #endif

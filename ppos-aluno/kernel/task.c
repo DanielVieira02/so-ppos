@@ -7,10 +7,9 @@
 
 // Gerência básica de tarefas.
 
-#include <stdlib.h>
-
 #include "../lib/queue.h"
 #include "task.h"
+#include <stdlib.h>
 #include "memory.h"
 #include "ctx.h"
 #include "scheduler.h"
@@ -49,14 +48,14 @@ void task_init() {
 struct task_t *task_create(char *name, void (*entry)(void *), void *arg) {
     struct task_t *task;
 
-    task = mem_alloc(sizeof(struct task_t));
+    task = malloc(sizeof(struct task_t));
 
     if(task == NULL) {
         return NULL;
     }
 
     void * stack;
-    stack = (void *) mem_alloc(STACKSIZE);
+    stack = (void *) malloc(STACKSIZE);
 
     if(stack == NULL) {
         return NULL;
@@ -96,11 +95,11 @@ int task_destroy(struct task_t *task) {
     task->task_pai = NULL;
     task->status = DONE;
     if (task->id)
-        free(task->context.stack);
+        mem_free(task->context.stack);
     VALGRIND_STACK_DEREGISTER (task->vg_id);
     queue_destroy(task->suspend_queue);
     task->suspend_queue = NULL;
-    free(task);
+    mem_free(task);
 
     return NOERROR;
 }

@@ -40,7 +40,6 @@ void print_tasks(void * item) {
 }
 
 void task_run(struct task_t *task) {
-
     //retira a tarefa task da fila de prontas
     if (queue_del(ready_queue, (void *) task) == 0) {
         task->status = EXECUTING;
@@ -153,7 +152,6 @@ void check_sleeping_tasks() {
 }
 
 void dispatcher() {
-
     struct task_t * task_user;
     if (!(task_user = task_create("user", user_main, NULL))) {
         return;

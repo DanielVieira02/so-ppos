@@ -6,7 +6,6 @@
 // Versão 2.0 -- Junho de 2025
 
 // Implementação do TAD fila genérica
-#include <stdlib.h>
 #include <stdio.h>
 #include "queue.h"
 #include "../kernel/memory.h"

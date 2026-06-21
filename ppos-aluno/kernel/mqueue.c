@@ -5,10 +5,10 @@
 // Gerência de filas de mensagens
 
 #include <string.h>
-#include <stdlib.h>
 #include "../lib/queue.h"
 #include "../hardware/cpu.h"
 #include "semaphore.h"
+#include "memory.h"
 
 struct mqueue_t {
 	unsigned int n_msgs;
@@ -26,7 +26,7 @@ void mqueue_init() {
 struct mqueue_t *mqueue_create(int max_msgs, int msg_size) {
 	if (max_msgs <= 0 || msg_size <= 0) return NULL;
 	
-	struct mqueue_t * new_queue = malloc(sizeof(struct mqueue_t));
+	struct mqueue_t * new_queue = mem_alloc(sizeof(struct mqueue_t));
 	if (!new_queue) return NULL;
 	
 	// criacao e verificacao base da fila
@@ -61,7 +61,7 @@ int mqueue_destroy(struct mqueue_t *queue) {
 	void * item = queue_head(queue->msg_queue);
 	while (queue_size(queue->msg_queue) > 0) {
 		if (item != NULL) {
-			free(item);
+			mem_free(item);
 		}
 		queue_del(queue->msg_queue, item);
 		item = queue_head(queue->msg_queue);
@@ -74,7 +74,7 @@ int mqueue_destroy(struct mqueue_t *queue) {
 	queue->sem_send = NULL;
 	if (sem_destroy(queue->sem_recv) == -1) return -1;
 	queue->sem_recv = NULL;
-	free(queue);
+	mem_free(queue);
 	
 	return 0;
 };
@@ -87,8 +87,9 @@ int mqueue_send(struct mqueue_t *queue, void *msg) {
 	status = sem_down(queue->sem_access);
 	if (status) return -1;
 	
-	void * msg_ptr = malloc(queue->size);
-	memcpy(msg_ptr, msg, queue->size); // copia mensagem, para nao depender da mensagem original ser mantida viva
+	void * msg_ptr = mem_alloc(queue->size);
+	//mem_report();
+	//memcpy(msg_ptr, msg, queue->size); // copia mensagem, para nao depender da mensagem original ser mantida viva
 	queue_add(queue->msg_queue, msg_ptr);
 	queue->n_msgs++;
 	
@@ -107,13 +108,13 @@ int mqueue_recv(struct mqueue_t *queue, void *msg) {
 	if (status) return -1;
 	
 	void * queue_msg = queue_head(queue->msg_queue);
-	memcpy(msg, queue_msg, queue->size);
+	//memcpy(msg, queue_msg, queue->size);
 	queue_del(queue->msg_queue, queue_msg);
 	queue->n_msgs--;
 	
 	sem_up(queue->sem_send);
 	sem_up(queue->sem_access); // aumenta espaco para mandar mensagens
-	free(queue_msg);
+	mem_free(queue_msg);
 	
 	return 0;
 };
