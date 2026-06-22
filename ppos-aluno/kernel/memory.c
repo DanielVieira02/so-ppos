@@ -74,7 +74,7 @@ void mem_init()
 
 void *mem_alloc(int size)
 {
-    if (size < 16 || size > mem_avail())
+    if (size <= 0 || size > mem_avail())
     {
         return NULL;
     }

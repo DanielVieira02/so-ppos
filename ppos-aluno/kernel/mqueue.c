@@ -3,6 +3,7 @@
 // Este arquivo PODE/DEVE ser alterado.
 
 // Gerência de filas de mensagens
+#include <stdio.h>
 
 #include <string.h>
 #include "../lib/queue.h"
@@ -19,6 +20,28 @@ struct mqueue_t {
 	struct semaphore_t * sem_recv; // semaforo para controlar envio de mensagens
 	struct semaphore_t * sem_send; // idem para recebimento de mensagens 
 };
+
+int memory_copy(void * dest, void * src, int tamanho) {
+    if (!dest || !src) {
+        return -1;
+    }
+
+    char * dest_por_byte = (char *) dest;
+    if (!dest_por_byte) {
+        return -1;
+    }
+
+    char * src_por_byte = (char *) src;
+    if (!src_por_byte) {
+        return -1;
+    }
+
+    for (int i = 0; i < tamanho; i++) {
+        dest_por_byte[i] = src_por_byte[i];
+    }
+
+    return 0;
+}
 
 void mqueue_init() {
 }
@@ -88,8 +111,7 @@ int mqueue_send(struct mqueue_t *queue, void *msg) {
 	if (status) return -1;
 	
 	void * msg_ptr = mem_alloc(queue->size);
-	//mem_report();
-	//memcpy(msg_ptr, msg, queue->size); // copia mensagem, para nao depender da mensagem original ser mantida viva
+	memory_copy(msg_ptr, msg, queue->size); // copia mensagem, para nao depender da mensagem original ser mantida viva
 	queue_add(queue->msg_queue, msg_ptr);
 	queue->n_msgs++;
 	
@@ -108,7 +130,7 @@ int mqueue_recv(struct mqueue_t *queue, void *msg) {
 	if (status) return -1;
 	
 	void * queue_msg = queue_head(queue->msg_queue);
-	//memcpy(msg, queue_msg, queue->size);
+	memory_copy(msg, queue_msg, queue->size);
 	queue_del(queue->msg_queue, queue_msg);
 	queue->n_msgs--;
 	
